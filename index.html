@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Asistencia Realidades DISO 1113 - 202610</title>
+  <title>Asistencia Realidades – Una clase</title>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -39,7 +39,7 @@
       font-size: 0.9rem;
       font-weight: 600;
     }
-    .controls select,
+    .controls input[type="date"],
     .controls input[type="text"],
     .controls button {
       padding: 0.35rem 0.6rem;
@@ -65,7 +65,7 @@
     table {
       border-collapse: collapse;
       width: 100%;
-      min-width: 1000px;
+      min-width: 600px;
       font-size: 0.8rem;
     }
     thead {
@@ -74,8 +74,7 @@
       background: #fafafa;
       z-index: 2;
     }
-    th,
-    td {
+    th, td {
       border: 1px solid #ddd;
       padding: 0.3rem 0.4rem;
       text-align: center;
@@ -99,7 +98,6 @@
       min-width: 90px;
     }
 
-    /* Celda de asistencia: solo centramos el checkbox, sin flexbox apilado */
     .asistencia-celda input[type="checkbox"] {
       transform: scale(1.1);
       cursor: pointer;
@@ -112,56 +110,24 @@
       background-color: #ffe5e5 !important;
     }
 
-    .resumen {
-      margin-top: 0.75rem;
-      font-size: 0.85rem;
-    }
-
     .small {
       font-size: 0.78rem;
       color: #555;
-    }
-
-    @media (max-width: 900px) {
-      thead {
-        position: static;
-      }
+      margin-top: 0.75rem;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Asistencia - Realidades (DISO 1113 - NRC 58668)</h1>
-    <p>Primer semestre 2026 · 16 clases · Universidad de los Andes</p>
+    <h1>Asistencia – Realidades (DISO 1113 · NRC 58668)</h1>
+    <p>Registro de asistencia para una clase específica</p>
   </header>
 
   <main>
     <section class="controls">
       <div>
-        <label for="claseSelect">Clase:</label>
-        <select id="claseSelect">
-          <option value="1">Clase 1</option>
-          <option value="2">Clase 2</option>
-          <option value="3">Clase 3</option>
-          <option value="4">Clase 4</option>
-          <option value="5">Clase 5</option>
-          <option value="6">Clase 6</option>
-          <option value="7">Clase 7</option>
-          <option value="8">Clase 8</option>
-          <option value="9">Clase 9</option>
-          <option value="10">Clase 10</option>
-          <option value="11">Clase 11</option>
-          <option value="12">Clase 12</option>
-          <option value="13">Clase 13</option>
-          <option value="14">Clase 14</option>
-          <option value="15">Clase 15</option>
-          <option value="16">Clase 16</option>
-        </select>
-      </div>
-
-      <div>
-        <button id="marcarTodosBtn">Marcar todos presentes</button>
-        <button id="limpiarClaseBtn">Limpiar clase</button>
+        <label for="fechaClase">Fecha de la clase:</label>
+        <input type="date" id="fechaClase" />
       </div>
 
       <div>
@@ -170,7 +136,11 @@
       </div>
 
       <div>
-        <button id="exportarJsonBtn">Exportar datos (JSON)</button>
+        <button id="marcarTodosBtn">Marcar todos presentes</button>
+        <button id="limpiarBtn">Limpiar asistencia</button>
+      </div>
+
+      <div>
         <button id="exportarCsvBtn">Exportar asistencia (CSV)</button>
       </div>
     </section>
@@ -182,39 +152,21 @@
             <tr>
               <th class="col-nombre">Nombre del estudiante</th>
               <th class="col-id">ID</th>
-              <th>Clase 1</th>
-              <th>Clase 2</th>
-              <th>Clase 3</th>
-              <th>Clase 4</th>
-              <th>Clase 5</th>
-              <th>Clase 6</th>
-              <th>Clase 7</th>
-              <th>Clase 8</th>
-              <th>Clase 9</th>
-              <th>Clase 10</th>
-              <th>Clase 11</th>
-              <th>Clase 12</th>
-              <th>Clase 13</th>
-              <th>Clase 14</th>
-              <th>Clase 15</th>
-              <th>Clase 16</th>
-              <th>Total asistencias</th>
+              <th>Presente</th>
             </tr>
           </thead>
           <tbody id="cuerpoTabla"></tbody>
         </table>
       </div>
 
-      <div class="resumen" id="resumenClase">
-        Selecciona una clase para ver el resumen de asistencia.
-      </div>
       <div class="small">
-        Tip: marca/desmarca con clic en las casillas. Los datos se guardan en este navegador (localStorage).
+        Marca la asistencia para esta fecha y luego exporta el archivo CSV.
       </div>
     </section>
   </main>
 
   <script>
+    // Lista de estudiantes tomada del archivo de lista de clase
     const estudiantes = [
       { nombre: "AGUIAR CUJAR, NICOLE ANDREA", id: "202520130" },
       { nombre: "ANACONA PIRA, ANNA ELISABETH", id: "202512336" },
@@ -254,70 +206,18 @@
       { nombre: "VILLALBA VELANDIA, ISABELLA PANAMBI", id: "202521187" }
     ];
 
-    const NUM_CLASES = 16;
-    const STORAGE_KEY = "asistencia_realidades_202610_58668";
-
-    const claseSelect = document.getElementById("claseSelect");
     const filtroNombre = document.getElementById("filtroNombre");
     const cuerpoTabla = document.getElementById("cuerpoTabla");
-    const resumenClase = document.getElementById("resumenClase");
     const marcarTodosBtn = document.getElementById("marcarTodosBtn");
-    const limpiarClaseBtn = document.getElementById("limpiarClaseBtn");
-    const exportarJsonBtn = document.getElementById("exportarJsonBtn");
+    const limpiarBtn = document.getElementById("limpiarBtn");
     const exportarCsvBtn = document.getElementById("exportarCsvBtn");
+    const fechaClaseInput = document.getElementById("fechaClase");
 
-    let datosAsistencia = cargarDesdeStorage();
-
-    function crearEstructuraVacia() {
-      const data = {};
-      estudiantes.forEach(est => {
-        data[est.id] = {};
-        for (let c = 1; c <= NUM_CLASES; c++) {
-          data[est.id][c] = false;
-        }
-      });
-      return data;
-    }
-
-    function cargarDesdeStorage() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return crearEstructuraVacia();
-      try {
-        const parsed = JSON.parse(raw);
-        estudiantes.forEach(est => {
-          if (!parsed[est.id]) parsed[est.id] = {};
-          for (let c = 1; c <= NUM_CLASES; c++) {
-            if (typeof parsed[est.id][c] !== "boolean") {
-              parsed[est.id][c] = false;
-            }
-          }
-        });
-        return parsed;
-      } catch (e) {
-        console.error("Error leyendo storage, se reinicia:", e);
-        return crearEstructuraVacia();
-      }
-    }
-
-    function guardarEnStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(datosAsistencia));
-    }
-
-    function contarAsistenciasEstudiante(idEstudiante) {
-      let total = 0;
-      for (let c = 1; c <= NUM_CLASES; c++) {
-        if (datosAsistencia[idEstudiante] && datosAsistencia[idEstudiante][c]) total++;
-      }
-      return total;
-    }
-
-    function contarAsistenciasClase(numClase) {
-      let presentes = 0;
-      estudiantes.forEach(est => {
-        if (datosAsistencia[est.id] && datosAsistencia[est.id][numClase]) presentes++;
-      });
-      return presentes;
-    }
+    // Estructura simple: asistencia[ID] = true/false
+    let asistencia = {};
+    estudiantes.forEach(est => {
+      asistencia[est.id] = false;
+    });
 
     function renderTabla() {
       const filtro = filtroNombre.value.trim().toLowerCase();
@@ -338,97 +238,62 @@
         tdId.classList.add("col-id");
         tr.appendChild(tdId);
 
-        for (let c = 1; c <= NUM_CLASES; c++) {
-          const td = document.createElement("td");
-          td.classList.add("asistencia-celda");
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.dataset.estudianteId = est.id;
-          checkbox.dataset.clase = c;
-          checkbox.checked = !!(datosAsistencia[est.id] && datosAsistencia[est.id][c]);
-          if (checkbox.checked) td.classList.add("present");
+        const tdAsistencia = document.createElement("td");
+        tdAsistencia.classList.add("asistencia-celda");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = !!asistencia[est.id];
 
-          checkbox.addEventListener("change", () => {
-            const presente = checkbox.checked;
-            datosAsistencia[est.id][c] = presente;
-            td.classList.toggle("present", presente);
-            td.classList.toggle("ausente", !presente);
-            actualizarTotalesFila(tr, est.id);
-            actualizarResumenClase();
-            guardarEnStorage();
-          });
-
-          td.appendChild(checkbox);
-          tr.appendChild(td);
+        if (checkbox.checked) {
+          tdAsistencia.classList.add("present");
         }
 
-        const tdTotal = document.createElement("td");
-        tdTotal.classList.add("total-col");
-        tdTotal.textContent = contarAsistenciasEstudiante(est.id);
-        tr.appendChild(tdTotal);
+        checkbox.addEventListener("change", () => {
+          const presente = checkbox.checked;
+          asistencia[est.id] = presente;
+          tdAsistencia.classList.toggle("present", presente);
+          tdAsistencia.classList.toggle("ausente", !presente);
+        });
+
+        tdAsistencia.appendChild(checkbox);
+        tr.appendChild(tdAsistencia);
 
         cuerpoTabla.appendChild(tr);
       });
-
-      actualizarResumenClase();
     }
 
-    function actualizarTotalesFila(tr, idEstudiante) {
-      const total = contarAsistenciasEstudiante(idEstudiante);
-      const tdTotal = tr.querySelector(".total-col");
-      if (tdTotal) tdTotal.textContent = total;
-    }
-
-    function actualizarResumenClase() {
-      const claseActual = parseInt(claseSelect.value, 10);
-      const presentes = contarAsistenciasClase(claseActual);
-      const totalEstudiantes = estudiantes.length;
-      const porcentaje =
-        totalEstudiantes > 0
-          ? ((presentes / totalEstudiantes) * 100).toFixed(1)
-          : "0.0";
-
-      resumenClase.textContent =
-        `Clase ${claseActual}: ${presentes} presentes de ${totalEstudiantes} estudiantes (${porcentaje}%).`;
-    }
-
-    function marcarTodosPresentesEnClase(numClaseVisible) {
+    function marcarTodosPresentes() {
       estudiantes.forEach(est => {
-        if (!datosAsistencia[est.id]) datosAsistencia[est.id] = {};
-        datosAsistencia[est.id][numClaseVisible] = true;
+        asistencia[est.id] = true;
       });
-      guardarEnStorage();
       renderTabla();
     }
 
-    function limpiarClase(numClaseVisible) {
+    function limpiarAsistencia() {
       estudiantes.forEach(est => {
-        if (!datosAsistencia[est.id]) datosAsistencia[est.id] = {};
-        datosAsistencia[est.id][numClaseVisible] = false;
+        asistencia[est.id] = false;
       });
-      guardarEnStorage();
       renderTabla();
     }
 
     function exportarCSV() {
-      const encabezados = ["Nombre", "ID"];
-      for (let c = 1; c <= NUM_CLASES; c++) {
-        encabezados.push(`Clase_${c}`);
+      const fechaValor = fechaClaseInput.value;
+      if (!fechaValor) {
+        alert("Por favor selecciona la fecha de la clase antes de exportar.");
+        return;
       }
-      encabezados.push("Total_asistencias");
 
-      const filas = [encabezados];
+      // Encabezado con fecha en la primera línea
+      const encabezadoFecha = `Fecha de la clase: ${fechaValor}`;
+      const encabezados = ["Nombre", "ID", "Fecha", "Presente"];
+
+      const filas = [];
+      filas.push([encabezadoFecha]); // primera fila solo con la fecha
+      filas.push(encabezados);       // segunda fila: encabezados de columnas
 
       estudiantes.forEach(est => {
-        const fila = [est.nombre, est.id];
-        let total = 0;
-        for (let c = 1; c <= NUM_CLASES; c++) {
-          const presente = datosAsistencia[est.id] && datosAsistencia[est.id][c];
-          fila.push(presente ? "1" : "0");
-          if (presente) total++;
-        }
-        fila.push(String(total));
-        filas.push(fila);
+        const presente = asistencia[est.id] ? "P" : "A"; // P: presente, A: ausente
+        filas.push([est.nombre, est.id, fechaValor, presente]);
       });
 
       const lineas = filas.map(fila =>
@@ -444,20 +309,26 @@
       const blob = new Blob([csvContenido], {
         type: "text/csv;charset=utf-8;"
       });
+
+      const nombreArchivo = `asistencia_realidades_${fechaValor}.csv`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "asistencia_realidades_202610_58668.csv";
+      a.download = nombreArchivo;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
 
+    // Eventos
     filtroNombre.addEventListener("input", renderTabla);
-    claseSelect.addEventListener("change", actualizarResumenClase);
+    marcarTodosBtn.addEventListener("click", marcarTodosPresentes);
+    limpiarBtn.addEventListener("click", limpiarAsistencia);
+    exportarCsvBtn.addEventListener("click", exportarCSV);
 
-    marcarTodosBtn.addEventListener("click", () => {
-      const numClase = parseInt(claseSelect.value, 10);
-      if (confirm(`¿Marcar presentes a todos los estudiantes en la clase ${numClase}?`)) {
-        marcarTodosPresentesEnClase(numCla
+    // Inicializar
+    renderTabla();
+  </script>
+</body>
+</html>
