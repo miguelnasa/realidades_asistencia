@@ -55,21 +55,28 @@
       background: #eaeaea;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .tabla-contenedor {
       background: #fff;
+      border: 1px solid #ddd;
+      overflow-x: auto;
+    }
+
+    table {
+      min-width: 900px;
+      border-collapse: collapse;
       font-size: 0.8rem;
+      width: 100%;
     }
     thead {
       position: sticky;
       top: 0;
       z-index: 2;
     }
-    th, td {
+    th,
+    td {
       border: 1px solid #ddd;
       padding: 0.3rem 0.4rem;
-      text-align: left;
+      text-align: center;
       white-space: nowrap;
     }
     th {
@@ -78,23 +85,14 @@
     tbody tr:nth-child(even) {
       background: #f9f9f9;
     }
-    .sticky-col {
-      position: sticky;
-      left: 0;
-      background: #fff;
-      z-index: 1;
+
+    .col-nombre {
+      text-align: left;
+      min-width: 260px;
     }
-    .sticky-col-2 {
-      position: sticky;
-      left: 200px;
-      background: #fff;
-      z-index: 1;
-    }
-    .id-col {
-      width: 90px;
-    }
-    .nombre-col {
-      width: 220px;
+    .col-id {
+      text-align: left;
+      min-width: 90px;
     }
 
     .asistencia-checkbox {
@@ -121,13 +119,8 @@
     }
 
     @media (max-width: 900px) {
-      .sticky-col,
-      .sticky-col-2 {
+      thead {
         position: static;
-      }
-      table {
-        display: block;
-        overflow-x: auto;
       }
     }
   </style>
@@ -143,6 +136,7 @@
       <div>
         <label for="claseSelect">Clase:</label>
         <select id="claseSelect">
+          <!-- Las 16 clases -->
           <option value="1">Clase 1</option>
           <option value="2">Clase 2</option>
           <option value="3">Clase 3</option>
@@ -174,38 +168,40 @@
 
       <div>
         <button id="exportarJsonBtn">Exportar datos (JSON)</button>
-        <!-- NUEVO: botón CSV -->
         <button id="exportarCsvBtn">Exportar asistencia (CSV)</button>
       </div>
     </section>
 
     <section>
-      <table id="tablaAsistencia">
-        <thead>
-          <tr>
-            <th class="sticky-col nombre-col">Nombre del estudiante</th>
-            <th class="sticky-col-2 id-col">ID</th>
-            <th>1</th>
-            <th>2</th>
-            <th>3</th>
-            <th>4</th>
-            <th>5</th>
-            <th>6</th>
-            <th>7</th>
-            <th>8</th>
-            <th>9</th>
-            <th>10</th>
-            <th>11</th>
-            <th>12</th>
-            <th>13</th>
-            <th>14</th>
-            <th>15</th>
-            <th>16</th>
-            <th>Total asistencias</th>
-          </tr>
-        </thead>
-        <tbody id="cuerpoTabla"></tbody>
-      </table>
+      <div class="tabla-contenedor">
+        <table id="tablaAsistencia">
+          <thead>
+            <tr>
+              <th class="col-nombre">Nombre del estudiante</th>
+              <th class="col-id">ID</th>
+              <!-- 16 columnas, cada una rotulada como Clase n -->
+              <th>Clase 1</th>
+              <th>Clase 2</th>
+              <th>Clase 3</th>
+              <th>Clase 4</th>
+              <th>Clase 5</th>
+              <th>Clase 6</th>
+              <th>Clase 7</th>
+              <th>Clase 8</th>
+              <th>Clase 9</th>
+              <th>Clase 10</th>
+              <th>Clase 11</th>
+              <th>Clase 12</th>
+              <th>Clase 13</th>
+              <th>Clase 14</th>
+              <th>Clase 15</th>
+              <th>Clase 16</th>
+              <th>Total asistencias</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpoTabla"></tbody>
+        </table>
+      </div>
 
       <div class="resumen" id="resumenClase">
         Selecciona una clase para ver el resumen de asistencia.
@@ -217,6 +213,7 @@
   </main>
 
   <script>
+    // Lista de estudiantes extraída del archivo oficial de Banner
     const estudiantes = [
       { nombre: "AGUIAR CUJAR, NICOLE ANDREA", id: "202520130" },
       { nombre: "ANACONA PIRA, ANNA ELISABETH", id: "202512336" },
@@ -266,7 +263,7 @@
     const marcarTodosBtn = document.getElementById("marcarTodosBtn");
     const limpiarClaseBtn = document.getElementById("limpiarClaseBtn");
     const exportarJsonBtn = document.getElementById("exportarJsonBtn");
-    const exportarCsvBtn = document.getElementById("exportarCsvBtn"); // NUEVO
+    const exportarCsvBtn = document.getElementById("exportarCsvBtn");
 
     let datosAsistencia = cargarDesdeStorage();
 
@@ -287,9 +284,7 @@
       try {
         const parsed = JSON.parse(raw);
         estudiantes.forEach(est => {
-          if (!parsed[est.id]) {
-            parsed[est.id] = {};
-          }
+          if (!parsed[est.id]) parsed[est.id] = {};
           for (let c = 1; c <= NUM_CLASES; c++) {
             if (typeof parsed[est.id][c] !== "boolean") {
               parsed[est.id][c] = false;
@@ -310,9 +305,7 @@
     function contarAsistenciasEstudiante(idEstudiante) {
       let total = 0;
       for (let c = 1; c <= NUM_CLASES; c++) {
-        if (datosAsistencia[idEstudiante] && datosAsistencia[idEstudiante][c]) {
-          total++;
-        }
+        if (datosAsistencia[idEstudiante] && datosAsistencia[idEstudiante][c]) total++;
       }
       return total;
     }
@@ -320,9 +313,7 @@
     function contarAsistenciasClase(numClase) {
       let presentes = 0;
       estudiantes.forEach(est => {
-        if (datosAsistencia[est.id] && datosAsistencia[est.id][numClase]) {
-          presentes++;
-        }
+        if (datosAsistencia[est.id] && datosAsistencia[est.id][numClase]) presentes++;
       });
       return presentes;
     }
@@ -335,15 +326,15 @@
         if (filtro && !est.nombre.toLowerCase().includes(filtro)) return;
 
         const tr = document.createElement("tr");
+
         const tdNombre = document.createElement("td");
         tdNombre.textContent = est.nombre;
-        tdNombre.classList.add("sticky-col", "nombre-col");
+        tdNombre.classList.add("col-nombre");
+        tr.appendChild(tdNombre);
 
         const tdId = document.createElement("td");
         tdId.textContent = est.id;
-        tdId.classList.add("sticky-col-2", "id-col");
-
-        tr.appendChild(tdNombre);
+        tdId.classList.add("col-id");
         tr.appendChild(tdId);
 
         for (let c = 1; c <= NUM_CLASES; c++) {
@@ -396,8 +387,7 @@
         : "0.0";
 
       resumenClase.textContent =
-        `Clase ${claseActual}: ${presentes} presentes de ${totalEstudiantes} ` +
-        `estudiantes (${porcentaje}%).`;
+        `Clase ${claseActual}: ${presentes} presentes de ${totalEstudiantes} estudiantes (${porcentaje}%).`;
     }
 
     function marcarTodosPresentesEnClase(numClaseVisible) {
@@ -418,7 +408,6 @@
       renderTabla();
     }
 
-    // NUEVO: exportar a CSV (compatible con Excel)
     function exportarCSV() {
       const encabezados = ["Nombre", "ID"];
       for (let c = 1; c <= NUM_CLASES; c++) {
@@ -461,8 +450,8 @@
       URL.revokeObjectURL(url);
     }
 
+    // Eventos
     filtroNombre.addEventListener("input", renderTabla);
-
     claseSelect.addEventListener("change", actualizarResumenClase);
 
     marcarTodosBtn.addEventListener("click", () => {
@@ -480,11 +469,15 @@
     });
 
     exportarJsonBtn.addEventListener("click", () => {
-      const dataStr = JSON.stringify({
-        estudiantes,
-        asistencia: datosAsistencia,
-        numClases: NUM_CLASES
-      }, null, 2);
+      const dataStr = JSON.stringify(
+        {
+          estudiantes,
+          asistencia: datosAsistencia,
+          numClases: NUM_CLASES
+        },
+        null,
+        2
+      );
 
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -497,7 +490,6 @@
       URL.revokeObjectURL(url);
     });
 
-    // NUEVO: listener del botón CSV
     exportarCsvBtn.addEventListener("click", exportarCSV);
 
     // Inicializar
