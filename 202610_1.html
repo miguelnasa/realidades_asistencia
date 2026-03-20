@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Asistencia Realidades DISO 1113 - 202610</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+    header {
+      background: #222;
+      color: #fff;
+      padding: 1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+    header p {
+      margin: 0.25rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    main {
+      padding: 1rem 1.5rem 2rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .controls label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .controls select,
+    .controls input[type="text"],
+    .controls button {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.9rem;
+    }
+    .controls button {
+      cursor: pointer;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #fff;
+      transition: background 0.15s ease;
+    }
+    .controls button:hover {
+      background: #eaeaea;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: 0.8rem;
+    }
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.3rem 0.4rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      background: #fafafa;
+    }
+    tbody tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      background: #fff;
+      z-index: 1;
+    }
+    .sticky-col-2 {
+      position: sticky;
+      left: 200px;
+      background: #fff;
+      z-index: 1;
+    }
+    .id-col {
+      width: 90px;
+    }
+    .nombre-col {
+      width: 220px;
+    }
+
+    .asistencia-checkbox {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .present {
+      background-color: #e0f6e9 !important;
+    }
+    .ausente {
+      background-color: #ffe5e5 !important;
+    }
+
+    .resumen {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .small {
+      font-size: 0.78rem;
+      color: #555;
+    }
+
+    @media (max-width: 900px) {
+      .sticky-col,
+      .sticky-col-2 {
+        position: static;
+      }
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Asistencia - Realidades (DISO 1113 - NRC 58668)</h1>
+    <p>Primer semestre 2026 · 16 clases · Universidad de los Andes</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <div>
+        <label for="claseSelect">Clase:</label>
+        <select id="claseSelect">
+          <option value="1">Clase 1</option>
+          <option value="2">Clase 2</option>
+          <option value="3">Clase 3</option>
+          <option value="4">Clase 4</option>
+          <option value="5">Clase 5</option>
+          <option value="6">Clase 6</option>
+          <option value="7">Clase 7</option>
+          <option value="8">Clase 8</option>
+          <option value="9">Clase 9</option>
+          <option value="10">Clase 10</option>
+          <option value="11">Clase 11</option>
+          <option value="12">Clase 12</option>
+          <option value="13">Clase 13</option>
+          <option value="14">Clase 14</option>
+          <option value="15">Clase 15</option>
+          <option value="16">Clase 16</option>
+        </select>
+      </div>
+
+      <div>
+        <button id="marcarTodosBtn">Marcar todos presentes</button>
+        <button id="limpiarClaseBtn">Limpiar clase</button>
+      </div>
+
+      <div>
+        <label for="filtroNombre">Filtrar por nombre:</label>
+        <input type="text" id="filtroNombre" placeholder="Escribe parte del nombre..." />
+      </div>
+
+      <div>
+        <button id="exportarJsonBtn">Exportar datos (JSON)</button>
+        <!-- NUEVO: botón CSV -->
+        <button id="exportarCsvBtn">Exportar asistencia (CSV)</button>
+      </div>
+    </section>
+
+    <section>
+      <table id="tablaAsistencia">
+        <thead>
+          <tr>
+            <th class="sticky-col nombre-col">Nombre del estudiante</th>
+            <th class="sticky-col-2 id-col">ID</th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>6</th>
+            <th>7</th>
+            <th>8</th>
+            <th>9</th>
+            <th>10</th>
+            <th>11</th>
+            <th>12</th>
+            <th>13</th>
+            <th>14</th>
+            <th>15</th>
+            <th>16</th>
+            <th>Total asistencias</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla"></tbody>
+      </table>
+
+      <div class="resumen" id="resumenClase">
+        Selecciona una clase para ver el resumen de asistencia.
+      </div>
+      <div class="small">
+        Tip: marca/desmarca con clic en las casillas. Los datos se guardan en este navegador (localStorage).
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const estudiantes = [
+      { nombre: "AGUIAR CUJAR, NICOLE ANDREA", id: "202520130" },
+      { nombre: "ANACONA PIRA, ANNA ELISABETH", id: "202512336" },
+      { nombre: "CARDOZO GALINDO, ANA MARIA", id: "202610717" },
+      { nombre: "CARRERA MORA, KARLA ISABELLA FERNANDA", id: "202525465" },
+      { nombre: "CERON GUIZA, ANA SOFIA", id: "202523436" },
+      { nombre: "CLAVIJO AFANADOR, MARIA JOSE", id: "202520346" },
+      { nombre: "CORREAL PALLARES, ALEGRIA", id: "202525833" },
+      { nombre: "CORREDOR AGUIRRE, VALENTINA", id: "202410923" },
+      { nombre: "CRUZ SALCEDO, VALERIA", id: "202521335" },
+      { nombre: "DE LA CRUZ GALVIS, MARIA DEL PILAR", id: "202526527" },
+      { nombre: "DIAZ SANCHEZ, IAN JACOBO", id: "202510866" },
+      { nombre: "DIAZGRANADOS URIBE, CRISTINA", id: "202521346" },
+      { nombre: "DURAN HERNANDEZ, SAMUEL", id: "202611701" },
+      { nombre: "FONSECA BETANCUR, LUCIANA", id: "202520435" },
+      { nombre: "GOMEZ HERNANDEZ, SAMUEL", id: "202613745" },
+      { nombre: "GUERRERO OCHOA, MARIA JOSE", id: "202521661" },
+      { nombre: "GUZMAN MEJIA, ANDREA", id: "202520553" },
+      { nombre: "HERNANDEZ PINZON, SARA", id: "202612544" },
+      { nombre: "LLANO CASTILLO, ISABELLA", id: "202520639" },
+      { nombre: "MEJIA ARENAS, LUCAS", id: "202611365" },
+      { nombre: "MELO CALDAS, LAURA DEL PILAR", id: "202414379" },
+      { nombre: "MURZI GAMBINO, ANNA ISABEL", id: "202523458" },
+      { nombre: "ORDOÑEZ GARZON, MARIA JOSE", id: "202520810" },
+      { nombre: "OSORIO BONILLA, MANUELA", id: "202520823" },
+      { nombre: "OSPINA CADENA, SERGIO DUVAN", id: "202522338" },
+      { nombre: "PELAEZ VERGARA, MANUELA", id: "202522682" },
+      { nombre: "RAMIREZ VELEZ, MARIA JULIANA", id: "202420874" },
+      { nombre: "ROBLES RIVERO, ROBERT ALIRIO", id: "202614913" },
+      { nombre: "RODRIGUEZ BOTELLO, MARIA ALEJANDRA", id: "202112821" },
+      { nombre: "ROJAS FRIES, GABRIELA", id: "202420090" },
+      { nombre: "SOTO ROMERO, DAVID SANTIAGO", id: "202523725" },
+      { nombre: "TINJACA GONZALEZ, CATALINA", id: "202412254" },
+      { nombre: "VALDERRAMA BENAVIDES, SOFIA", id: "202521151" },
+      { nombre: "VALDES ARAGON, JUAN SEBASTIAN", id: "202316471" },
+      { nombre: "VARGAS BOCANEGRA, GABRIELA", id: "202516706" },
+      { nombre: "VILLALBA VELANDIA, ISABELLA PANAMBI", id: "202521187" }
+    ];
+
+    const NUM_CLASES = 16;
+    const STORAGE_KEY = "asistencia_realidades_202610_58668";
+
+    const claseSelect = document.getElementById("claseSelect");
+    const filtroNombre = document.getElementById("filtroNombre");
+    const cuerpoTabla = document.getElementById("cuerpoTabla");
+    const resumenClase = document.getElementById("resumenClase");
+    const marcarTodosBtn = document.getElementById("marcarTodosBtn");
+    const limpiarClaseBtn = document.getElementById("limpiarClaseBtn");
+    const exportarJsonBtn = document.getElementById("exportarJsonBtn");
+    const exportarCsvBtn = document.getElementById("exportarCsvBtn"); // NUEVO
+
+    let datosAsistencia = cargarDesdeStorage();
+
+    function crearEstructuraVacia() {
+      const data = {};
+      estudiantes.forEach(est => {
+        data[est.id] = {};
+        for (let c = 1; c <= NUM_CLASES; c++) {
+          data[est.id][c] = false;
+        }
+      });
+      return data;
+    }
+
+    function cargarDesdeStorage() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return crearEstructuraVacia();
+      try {
+        const parsed = JSON.parse(raw);
+        estudiantes.forEach(est => {
+          if (!parsed[est.id]) {
+            parsed[est.id] = {};
+          }
+          for (let c = 1; c <= NUM_CLASES; c++) {
+            if (typeof parsed[est.id][c] !== "boolean") {
+              parsed[est.id][c] = false;
+            }
+          }
+        });
+        return parsed;
+      } catch (e) {
+        console.error("Error leyendo storage, se reinicia:", e);
+        return crearEstructuraVacia();
+      }
+    }
+
+    function guardarEnStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(datosAsistencia));
+    }
+
+    function contarAsistenciasEstudiante(idEstudiante) {
+      let total = 0;
+      for (let c = 1; c <= NUM_CLASES; c++) {
+        if (datosAsistencia[idEstudiante] && datosAsistencia[idEstudiante][c]) {
+          total++;
+        }
+      }
+      return total;
+    }
+
+    function contarAsistenciasClase(numClase) {
+      let presentes = 0;
+      estudiantes.forEach(est => {
+        if (datosAsistencia[est.id] && datosAsistencia[est.id][numClase]) {
+          presentes++;
+        }
+      });
+      return presentes;
+    }
+
+    function renderTabla() {
+      const filtro = filtroNombre.value.trim().toLowerCase();
+      cuerpoTabla.innerHTML = "";
+
+      estudiantes.forEach(est => {
+        if (filtro && !est.nombre.toLowerCase().includes(filtro)) return;
+
+        const tr = document.createElement("tr");
+        const tdNombre = document.createElement("td");
+        tdNombre.textContent = est.nombre;
+        tdNombre.classList.add("sticky-col", "nombre-col");
+
+        const tdId = document.createElement("td");
+        tdId.textContent = est.id;
+        tdId.classList.add("sticky-col-2", "id-col");
+
+        tr.appendChild(tdNombre);
+        tr.appendChild(tdId);
+
+        for (let c = 1; c <= NUM_CLASES; c++) {
+          const td = document.createElement("td");
+          td.classList.add("asistencia-checkbox");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.dataset.estudianteId = est.id;
+          checkbox.dataset.clase = c;
+          checkbox.checked = !!(datosAsistencia[est.id] && datosAsistencia[est.id][c]);
+          if (checkbox.checked) td.classList.add("present");
+
+          checkbox.addEventListener("change", () => {
+            const presente = checkbox.checked;
+            datosAsistencia[est.id][c] = presente;
+            td.classList.toggle("present", presente);
+            td.classList.toggle("ausente", !presente);
+            actualizarTotalesFila(tr, est.id);
+            actualizarResumenClase();
+            guardarEnStorage();
+          });
+
+          td.appendChild(checkbox);
+          tr.appendChild(td);
+        }
+
+        const tdTotal = document.createElement("td");
+        tdTotal.classList.add("total-col");
+        tdTotal.textContent = contarAsistenciasEstudiante(est.id);
+        tr.appendChild(tdTotal);
+
+        cuerpoTabla.appendChild(tr);
+      });
+
+      actualizarResumenClase();
+    }
+
+    function actualizarTotalesFila(tr, idEstudiante) {
+      const total = contarAsistenciasEstudiante(idEstudiante);
+      const tdTotal = tr.querySelector(".total-col");
+      if (tdTotal) tdTotal.textContent = total;
+    }
+
+    function actualizarResumenClase() {
+      const claseActual = parseInt(claseSelect.value, 10);
+      const presentes = contarAsistenciasClase(claseActual);
+      const totalEstudiantes = estudiantes.length;
+      const porcentaje = totalEstudiantes > 0
+        ? ((presentes / totalEstudiantes) * 100).toFixed(1)
+        : "0.0";
+
+      resumenClase.textContent =
+        `Clase ${claseActual}: ${presentes} presentes de ${totalEstudiantes} ` +
+        `estudiantes (${porcentaje}%).`;
+    }
+
+    function marcarTodosPresentesEnClase(numClaseVisible) {
+      estudiantes.forEach(est => {
+        if (!datosAsistencia[est.id]) datosAsistencia[est.id] = {};
+        datosAsistencia[est.id][numClaseVisible] = true;
+      });
+      guardarEnStorage();
+      renderTabla();
+    }
+
+    function limpiarClase(numClaseVisible) {
+      estudiantes.forEach(est => {
+        if (!datosAsistencia[est.id]) datosAsistencia[est.id] = {};
+        datosAsistencia[est.id][numClaseVisible] = false;
+      });
+      guardarEnStorage();
+      renderTabla();
+    }
+
+    // NUEVO: exportar a CSV (compatible con Excel)
+    function exportarCSV() {
+      const encabezados = ["Nombre", "ID"];
+      for (let c = 1; c <= NUM_CLASES; c++) {
+        encabezados.push(`Clase_${c}`);
+      }
+      encabezados.push("Total_asistencias");
+
+      const filas = [encabezados];
+
+      estudiantes.forEach(est => {
+        const fila = [est.nombre, est.id];
+        let total = 0;
+        for (let c = 1; c <= NUM_CLASES; c++) {
+          const presente = datosAsistencia[est.id] && datosAsistencia[est.id][c];
+          fila.push(presente ? "1" : "0");
+          if (presente) total++;
+        }
+        fila.push(String(total));
+        filas.push(fila);
+      });
+
+      const lineas = filas.map(fila =>
+        fila
+          .map(valor => {
+            const v = String(valor).replace(/"/g, '""');
+            return `"${v}"`;
+          })
+          .join(",")
+      );
+
+      const csvContenido = lineas.join("\r\n");
+      const blob = new Blob([csvContenido], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "asistencia_realidades_202610_58668.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    filtroNombre.addEventListener("input", renderTabla);
+
+    claseSelect.addEventListener("change", actualizarResumenClase);
+
+    marcarTodosBtn.addEventListener("click", () => {
+      const numClase = parseInt(claseSelect.value, 10);
+      if (confirm(`¿Marcar presentes a todos los estudiantes en la clase ${numClase}?`)) {
+        marcarTodosPresentesEnClase(numClase);
+      }
+    });
+
+    limpiarClaseBtn.addEventListener("click", () => {
+      const numClase = parseInt(claseSelect.value, 10);
+      if (confirm(`¿Borrar registros de la clase ${numClase}?`)) {
+        limpiarClase(numClase);
+      }
+    });
+
+    exportarJsonBtn.addEventListener("click", () => {
+      const dataStr = JSON.stringify({
+        estudiantes,
+        asistencia: datosAsistencia,
+        numClases: NUM_CLASES
+      }, null, 2);
+
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "asistencia_realidades_202610_58668.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // NUEVO: listener del botón CSV
+    exportarCsvBtn.addEventListener("click", exportarCSV);
+
+    // Inicializar
+    renderTabla();
+  </script>
+</body>
+</html>
