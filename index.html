@@ -27,6 +27,7 @@
     main {
       padding: 1rem 1.5rem 2rem;
     }
+
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -62,14 +63,15 @@
     }
 
     table {
-      min-width: 900px;
       border-collapse: collapse;
-      font-size: 0.8rem;
       width: 100%;
+      min-width: 1000px;
+      font-size: 0.8rem;
     }
     thead {
       position: sticky;
       top: 0;
+      background: #fafafa;
       z-index: 2;
     }
     th,
@@ -78,9 +80,11 @@
       padding: 0.3rem 0.4rem;
       text-align: center;
       white-space: nowrap;
+      vertical-align: middle;
     }
     th {
       background: #fafafa;
+      font-weight: 600;
     }
     tbody tr:nth-child(even) {
       background: #f9f9f9;
@@ -95,10 +99,10 @@
       min-width: 90px;
     }
 
-    .asistencia-checkbox {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    /* Celda de asistencia: solo centramos el checkbox, sin flexbox apilado */
+    .asistencia-celda input[type="checkbox"] {
+      transform: scale(1.1);
+      cursor: pointer;
     }
 
     .present {
@@ -136,7 +140,6 @@
       <div>
         <label for="claseSelect">Clase:</label>
         <select id="claseSelect">
-          <!-- Las 16 clases -->
           <option value="1">Clase 1</option>
           <option value="2">Clase 2</option>
           <option value="3">Clase 3</option>
@@ -179,7 +182,6 @@
             <tr>
               <th class="col-nombre">Nombre del estudiante</th>
               <th class="col-id">ID</th>
-              <!-- 16 columnas, cada una rotulada como Clase n -->
               <th>Clase 1</th>
               <th>Clase 2</th>
               <th>Clase 3</th>
@@ -213,7 +215,6 @@
   </main>
 
   <script>
-    // Lista de estudiantes extraída del archivo oficial de Banner
     const estudiantes = [
       { nombre: "AGUIAR CUJAR, NICOLE ANDREA", id: "202520130" },
       { nombre: "ANACONA PIRA, ANNA ELISABETH", id: "202512336" },
@@ -339,7 +340,7 @@
 
         for (let c = 1; c <= NUM_CLASES; c++) {
           const td = document.createElement("td");
-          td.classList.add("asistencia-checkbox");
+          td.classList.add("asistencia-celda");
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
           checkbox.dataset.estudianteId = est.id;
@@ -382,9 +383,10 @@
       const claseActual = parseInt(claseSelect.value, 10);
       const presentes = contarAsistenciasClase(claseActual);
       const totalEstudiantes = estudiantes.length;
-      const porcentaje = totalEstudiantes > 0
-        ? ((presentes / totalEstudiantes) * 100).toFixed(1)
-        : "0.0";
+      const porcentaje =
+        totalEstudiantes > 0
+          ? ((presentes / totalEstudiantes) * 100).toFixed(1)
+          : "0.0";
 
       resumenClase.textContent =
         `Clase ${claseActual}: ${presentes} presentes de ${totalEstudiantes} estudiantes (${porcentaje}%).`;
@@ -439,7 +441,9 @@
       );
 
       const csvContenido = lineas.join("\r\n");
-      const blob = new Blob([csvContenido], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([csvContenido], {
+        type: "text/csv;charset=utf-8;"
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -450,50 +454,10 @@
       URL.revokeObjectURL(url);
     }
 
-    // Eventos
     filtroNombre.addEventListener("input", renderTabla);
     claseSelect.addEventListener("change", actualizarResumenClase);
 
     marcarTodosBtn.addEventListener("click", () => {
       const numClase = parseInt(claseSelect.value, 10);
       if (confirm(`¿Marcar presentes a todos los estudiantes en la clase ${numClase}?`)) {
-        marcarTodosPresentesEnClase(numClase);
-      }
-    });
-
-    limpiarClaseBtn.addEventListener("click", () => {
-      const numClase = parseInt(claseSelect.value, 10);
-      if (confirm(`¿Borrar registros de la clase ${numClase}?`)) {
-        limpiarClase(numClase);
-      }
-    });
-
-    exportarJsonBtn.addEventListener("click", () => {
-      const dataStr = JSON.stringify(
-        {
-          estudiantes,
-          asistencia: datosAsistencia,
-          numClases: NUM_CLASES
-        },
-        null,
-        2
-      );
-
-      const blob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "asistencia_realidades_202610_58668.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-
-    exportarCsvBtn.addEventListener("click", exportarCSV);
-
-    // Inicializar
-    renderTabla();
-  </script>
-</body>
-</html>
+        marcarTodosPresentesEnClase(numCla
