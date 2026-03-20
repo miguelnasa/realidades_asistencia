@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Asistencia - Realidades DISO 1113</title>
+  <title>Asistencia</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -25,7 +25,7 @@
       padding: 1rem 1.25rem;
     }
     header h1 { margin: 0; font-size: 1.1rem; }
-    header p { margin: 0.25rem 0 0; font-size: 0.85rem; opacity: 0.85; }
+    header p { margin: 0.25rem 0 0; font-size: 0.85rem; opacity: 0.85; line-height: 1.4; }
     main { padding: 1rem 1.25rem 2.5rem; }
     .controls {
       display: flex;
@@ -160,8 +160,8 @@
 </head>
 <body>
   <header>
-    <h1>E1: REALIDADES - DISO 1113 (NRC 58668)</h1>
-    <p>Lista de asistencia PRIMER SEMESTRE 2026 - 202610</p>
+    <h1 id="tituloCurso">Asistencia</h1>
+    <p id="infoCurso">Cargando información del archivo...</p>
   </header>
 
   <main>
@@ -195,14 +195,21 @@
     </section>
   </main>
 
-  <footer>
+  <footer id="footerInfo">
     P = Presente, A = Ausente, T = Tarde. Los datos se guardan localmente en este navegador.
   </footer>
 
   <script>
     let estudiantes = [];
-    const STORAGE_KEY = "asistencia_realidades_202610";
+    let curso = {
+      titulo: "",
+      periodo: "",
+      nrc: "",
+      duracion: "",
+      status: ""
+    };
 
+    const STORAGE_KEY = "asistencia_realidades_202610";
     const fechaInput = document.getElementById("fecha");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
     const btnGuardar = document.getElementById("btnGuardar");
@@ -210,6 +217,9 @@
     const btnLimpiar = document.getElementById("btnLimpiar");
     const btnCargarArchivo = document.getElementById("btnCargarArchivo");
     const archivoLista = document.getElementById("archivoLista");
+    const tituloCurso = document.getElementById("tituloCurso");
+    const infoCurso = document.getElementById("infoCurso");
+    const footerInfo = document.getElementById("footerInfo");
 
     function hoyISO() {
       const h = new Date();
@@ -217,6 +227,18 @@
       const m = String(h.getMonth() + 1).padStart(2, "0");
       const d = String(h.getDate()).padStart(2, "0");
       return `${y}-${m}-${d}`;
+    }
+
+    function actualizarEncabezados() {
+      tituloCurso.textContent = curso.titulo || "Asistencia";
+      infoCurso.textContent = [
+        curso.periodo && `Periodo: ${curso.periodo}`,
+        curso.nrc && `NRC: ${curso.nrc}`,
+        curso.duracion && `Duración: ${curso.duracion}`,
+        curso.status && `Estado: ${curso.status}`
+      ].filter(Boolean).join(" | ") || "Cargando información del archivo...";
+      footerInfo.textContent = `P = Presente, A = Ausente, T = Tarde. ${curso.titulo ? `Curso: ${curso.titulo}. ` : ""}Los datos se guardan localmente en este navegador.`;
+      document.title = curso.titulo ? `Asistencia - ${curso.titulo}` : "Asistencia";
     }
 
     function actualizarEstadoExportar() {
@@ -231,31 +253,23 @@
 
     function marcarBotones(index, valor) {
       const grupo = document.querySelectorAll(`.grupo-${index} .asistencia-btn`);
-      grupo.forEach(btn => {
-        btn.classList.toggle("activo", btn.dataset.valor === valor);
-      });
+      grupo.forEach(btn => btn.classList.toggle("activo", btn.dataset.valor === valor));
     }
 
     function actualizarEtiqueta(index, valor) {
       const span = document.getElementById(`status-${index}`);
       span.textContent = "";
       span.className = "status-label";
-      if (valor === "P") {
-        span.textContent = "Presente";
-        span.classList.add("status-P");
-      } else if (valor === "A") {
-        span.textContent = "Ausente";
-        span.classList.add("status-A");
-      } else if (valor === "T") {
-        span.textContent = "Tarde";
-        span.classList.add("status-T");
-      }
+      if (valor === "P") { span.textContent = "Presente"; span.classList.add("status-P"); }
+      else if (valor === "A") { span.textContent = "Ausente"; span.classList.add("status-A"); }
+      else if (valor === "T") { span.textContent = "Tarde"; span.classList.add("status-T"); }
     }
 
     function construirTabla() {
       tablaCuerpo.innerHTML = "";
       estudiantes.forEach((est, index) => {
         const tr = document.createElement("tr");
+
         const tdIdx = document.createElement("td");
         tdIdx.textContent = index + 1;
 
@@ -373,7 +387,16 @@
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
       const asistenciaDia = data[fecha] || {};
 
-      const filas = [["Fecha", "Nombre", "ID", "Estado_inscripcion", "Semestre", "Asistencia"]];
+      const filas = [
+        ["Curso", curso.titulo],
+        ["Periodo", curso.periodo],
+        ["NRC", curso.nrc],
+        ["Duración", curso.duracion],
+        ["Status", curso.status],
+        [],
+        ["Fecha", "Nombre", "ID", "Estado_inscripcion", "Semestre", "Asistencia"]
+      ];
+
       estudiantes.forEach(est => {
         filas.push([
           fecha,
@@ -386,14 +409,16 @@
       });
 
       const csv = filas.map(fila =>
-        fila.map(campo => `"${String(campo ?? "").replace(/"/g, '""')}"`).join(",")
+        fila.length === 0
+          ? ""
+          : fila.map(campo => `"${String(campo ?? "").replace(/"/g, '""')}"`).join(",")
       ).join("\n");
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `asistencia_realidades_${fecha}.csv`;
+      link.download = `asistencia_${curso.nrc || "curso"}_${fecha}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -403,13 +428,27 @@
     async function leerExcel(file) {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      const sheet = workbook.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { header: 1, defval: "" });
+
+      const cursoKeys = {
+        "Título de curso": "titulo",
+        "Periodo": "periodo",
+        "NRC": "nrc",
+        "Duración": "duracion",
+        "Status": "status"
+      };
+
+      curso = { titulo: "", periodo: "", nrc: "", duracion: "", status: "" };
+
+      rows.forEach(row => {
+        const key = String(row[0] || "").trim();
+        if (cursoKeys[key]) curso[cursoKeys[key]] = String(row[1] || "").trim();
+      });
 
       const start = rows.findIndex(r => String(r[0]).trim() === "Nombre del alumno");
       if (start === -1) {
-        alert("No se encontró la fila 'Nombre del alumno' en el archivo.");
+        alert("No se encontró la tabla de estudiantes en el archivo.");
         return;
       }
 
@@ -421,6 +460,7 @@
         clase: String(r[7] || "").trim()
       }));
 
+      actualizarEncabezados();
       construirTabla();
       cargarAsistenciaGuardada();
     }
@@ -437,6 +477,7 @@
     btnLimpiar.addEventListener("click", limpiarAsistenciaDia);
 
     fechaInput.value = hoyISO();
+    actualizarEncabezados();
     actualizarEstadoExportar();
   </script>
 </body>
