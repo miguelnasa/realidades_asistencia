@@ -83,6 +83,11 @@
     .btn-exportar { background: var(--verde); }
     .btn-limpiar { background: var(--rojo); }
 
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
     .tabla-contenedor {
       max-height: 70vh;
       overflow-y: auto;
@@ -120,7 +125,6 @@
       background: #eef6ff;
     }
 
-    /* Botones grandes para asistencia en vez de select pequeño */
     .asistencia-opciones {
       display: flex;
       gap: 0.25rem;
@@ -179,7 +183,6 @@
       padding: 0.5rem 1.25rem 1rem;
     }
 
-    /* Diseño especial para móvil: filas tipo tarjeta y menos columnas visibles */
     @media (max-width: 768px) {
       header, main, footer {
         padding-left: 0.75rem;
@@ -261,7 +264,7 @@
         <input type="date" id="fecha" />
       </div>
       <button class="btn btn-guardar" id="btnGuardar">💾 Guardar asistencia</button>
-      <button class="btn btn-exportar" id="btnExportar">📤 Exportar CSV</button>
+      <button class="btn btn-exportar" id="btnExportar" disabled>📤 Exportar CSV</button>
       <button class="btn btn-limpiar" id="btnLimpiar">🗑️ Limpiar día</button>
     </section>
 
@@ -343,6 +346,17 @@
       return `${y}-${m}-${d}`;
     }
 
+    function actualizarEstadoExportar() {
+      const fecha = fechaInput.value;
+      if (!fecha) {
+        btnExportar.disabled = false; // o true, según prefieras
+        return;
+      }
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      const asistenciaDia = data[fecha];
+      btnExportar.disabled = !asistenciaDia;
+    }
+
     function cargarAsistenciaGuardada() {
       const fecha = fechaInput.value;
       if (!fecha) return;
@@ -353,6 +367,7 @@
         marcarBotones(index, valor);
         actualizarEtiqueta(index, valor);
       });
+      actualizarEstadoExportar();
     }
 
     function guardarAsistencia() {
@@ -376,6 +391,7 @@
       data[fecha] = asistenciaDia;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       alert("Asistencia guardada para " + fecha);
+      actualizarEstadoExportar();
     }
 
     function limpiarAsistenciaDia() {
@@ -392,6 +408,7 @@
         marcarBotones(index, "");
         actualizarEtiqueta(index, "");
       });
+      actualizarEstadoExportar();
     }
 
     function marcarBotones(index, valor) {
@@ -422,6 +439,7 @@
     }
 
     function exportarCSV() {
+      if (btnExportar.disabled) return;
       const fecha = fechaInput.value;
       if (!fecha) {
         alert("Por favor selecciona una fecha.");
@@ -530,7 +548,10 @@
       });
     }
 
-    fechaInput.addEventListener("change", cargarAsistenciaGuardada);
+    fechaInput.addEventListener("change", () => {
+      cargarAsistenciaGuardada();
+      actualizarEstadoExportar();
+    });
     btnGuardar.addEventListener("click", guardarAsistencia);
     btnExportar.addEventListener("click", exportarCSV);
     btnLimpiar.addEventListener("click", limpiarAsistenciaDia);
